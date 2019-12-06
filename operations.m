@@ -66,6 +66,7 @@ for i=1:Nflights*Gates*Bays
     ctype(1,i)='B';
 end
 
+
 Aeq=C([1:2],:);
 Aineq=C([3:6],:);
 bineq=rightside([3:6]);
