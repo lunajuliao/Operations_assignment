@@ -14,14 +14,28 @@ BayComplianceData = readtable('BayComplianceMatrix.xlsx','ReadRowNames',true,'Re
 PN = height(data);
 
 for i = 1:PN
-
-plane(i).AT = str2num(erase(string(data.Arrival(i)),':'));
-plane(i).DT = str2num(erase(string(data.Departure(i)),':'));
-plane(i).P = data.Passengers(i);
+    plane(i).AT = str2num(erase(string(data.Arrival(i)),':'));
+    plane(i).DT = str2num(erase(string(data.Departure(i)),':'));
+    plane(i).P = data.Passengers(i);
     if plane(i).AT > plane(i).DT
         plane(i).DT = 2350;
     elseif ( plane(i).DT - plane(i).AT < 15)
         plane(i).DT = 15+plane(i).AT;
+    end
+    
+    % Assigning numbers to different aircraft types
+    if     strcmp(data.Type(i),'B747')
+        plane(i).Type = 1;
+    elseif strcmp(data.Type(i),'B777')
+        plane(i).Type = 2;
+    elseif strcmp(data.Type(i),'B787')
+        plane(i).Type = 3;
+    elseif strcmp(data.Type(i),'B737')
+        plane(i).Type = 4;
+    elseif strcmp(data.Type(i),'ATR72')
+        plane(i).Type = 5;
+    else
+        plane(i).Type = -1; % Invalid aircraft type
     end
 end
 
