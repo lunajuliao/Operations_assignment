@@ -1,7 +1,12 @@
 %% GETTING DATA FROM EXCEL FILE
 
-clc
+
 clear all
+close all
+clc
+
+addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\matlab\x64_win64');
+addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\examples\src\matlab');
 
 data = readtable('Small_data.xlsx','ReadRowNames',true,'ReadVariableNames',true);
 PN = height(data);
@@ -33,17 +38,17 @@ for i = 1:PN
     plane(i) = plane(PN+1);
 end
 
-%% OVERLAPPING MATRIX C
+%% OVERLAPPING MATRIX OV
 % We use only the lower triangular matrix.
-C_initial = zeros(PN);
+OV_initial = zeros(PN);
 for i = 1:PN
     for k = i:PN
         if plane(i).DT >= plane(k).AT
-            C_initial(i,k) = 1;
+            OV_initial(i,k) = 1;
         end
     end
 end
-C = C_initial';
+OV = OV_initial';
 
     
             
