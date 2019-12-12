@@ -130,9 +130,7 @@ Aeq=[];
 
 
 %Computation of inequality constraint matrix:
-%1-bay and plane constraint: whenever there is an extra plane, we rewrite a
-%constraint concerning the ground existing planes which have to be assigned to the
-%bays (move or stay in the same place)
+%1-bay constraint: there can not be more than one bay with the some value
 for i=1:PN
     NULL(i,i)=0;
 end
@@ -149,34 +147,32 @@ for i=1:NBays
     Aineq=[Aineq;L];
 end 
 
-%set the vector of the right side of the inequality constraints
 for i=1:PN*NBays
         rightside_ineq(i,1) =1;
 end
 
-%set the vector of the right side of the equality constraints
 for i=1:PN
         rightside_eq(i,1) =1;
 end
 
-%set the vector of the upper bound of the decision variables
-%set the vector of the lower bound of the decision variables
-%set the vector that states the decision variables are binary or integer
 for i=1:PN*NBays
         ub(i,1) =1;
+end
+
+for i=1:PN*NBays
         lb(i,1) =0;
-        ctype(1,i)='B';
+end
+
+for i=1:PN*NBays
+    ctype(1,i)='B';
 end
 
 d=[7 4 3 5];
 f=[];
-%set the vector of the coefficients of the objective function for distance
-%between bays and gates
 for i=1:NBays
     for j=1:PN
         f=[f,d(i)*p(j)*2];
     end
 end
 
-%cplex implementation 
  x=cplexmilp(f, Aineq, rightside_ineq, Aeq, rightside_eq, [],[],[],lb, ub, ctype);
