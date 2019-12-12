@@ -39,25 +39,23 @@ for i = 1:PN
     end
     
     r=rand
-    switch plane(i).Type
+    switch plane().Type
         case 1
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane().Passenger.min =50
+           plane().Passenger.max =100
         case 2
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane().Passenger.min =50
+           plane().Passenger.max =100
         case 4
-          plane(i).Passenger_min =50
-          plane(i).Passenger_max =100
+           plane().Passenger.min =50
+           plane().Passenger.max =100
         case 5
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane().Passenger.min =50
+           plane().Passenger.max =100
         case -1
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane().Passenger.min =-1;
+           plane().Passenger.max =-1;
     end
-    
-    plane(i).Passenger= floor((plane(i).Passenger_max - plane(i).Passenger_min)*r) + plane(i).Passenger_max;
     
 end
 
