@@ -29,9 +29,21 @@ for i = 1:PN
         end
         plane(j)
     end
-%    plane(index) = plane(i);
+    plane(index) = plane(i);
     plane(i) = plane(PN+1);
 end
+
+%% OVERLAPPING MATRIX C
+% We use only the lower triangular matrix.
+C_initial = zeros(PN);
+for i = 1:PN
+    for k = i:PN
+        if plane(i).DT >= plane(k).AT
+            C_initial(i,k) = 1;
+        end
+    end
+end
+C = C_initial';
 
     
             
