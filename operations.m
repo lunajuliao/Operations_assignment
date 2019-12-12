@@ -1,10 +1,56 @@
+%% GETTING DATA FROM EXCEL FILE
+
 clc
 clear all
 
-F = readtable ('flight data.xlsx');
-D = readtable ('distance.xlsx');
+data = readtable('Small_data.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+PN = height(data);
 
-Nflights=2;
+for i = 1:PN
+
+plane(i).AT = str2num(erase(string(data.Arrival(i)),':'));
+plane(i).DT = str2num(erase(string(data.Departure(i)),':'));
+plane(i).P = data.Passengers(i);
+    if plane(i).AT > plane(i).DT
+        plane(i).DT = 2350;
+    elseif ( plane(i).DT - plane(i).AT < 15)
+        plane(i).DT = 15+plane(i).AT;
+    end
+end
+
+%% ORDERING DATA
+for i = 1:PN
+    plane(PN+1).AT = 2500;
+
+    for j = i:PN
+        if(plane(j).AT < plane(PN+1).AT)
+            plane(PN+1) = plane(j);
+            index = j;
+        end
+        plane(j)
+    end
+%    plane(index) = plane(i);
+    plane(i) = plane(PN+1);
+end
+
+    
+            
+%%
+
+% for i = 1:length(ts)
+%     for j = 1 : PN
+%         if (plane(j).AT <= ts(i) && plane(j).DT >= ts(i))
+%             plane(j).G_NG(i) = 1;
+%         else
+%             plane(j).G_NG(i) = 2;
+%     end
+%     end
+% end
+
+% F = readtable ('flight data.xlsx');
+% D = readtable ('distance.xlsx');
+% 
+Nflights=PN;
 Bays=2;
 Gates=2;
 
