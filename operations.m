@@ -9,6 +9,8 @@ addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\matlab\x64_win64');
 addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\examples\src\matlab');
 
 data = readtable('Small_data.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+BayComplianceData = readtable('BayComplianceMatrix.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+
 PN = height(data);
 
 for i = 1:PN
