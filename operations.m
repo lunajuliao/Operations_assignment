@@ -39,6 +39,16 @@ for i = 1:PN
         plane(i).Type = -1; % Invalid aircraft type
     end
     
+    if     strcmp(data.Terminal(i),'A')
+        plane(i).terminal = 1;
+    elseif strcmp(data.Terminal(i),'B')
+        plane(i).terminal = 2;
+    elseif strcmp(data.Terminal(i),'C')
+        plane(i).terminal = 3;
+    elseif strcmp(data.Terminal(i),'D')
+        plane(i).terminal = 4;
+    end
+    
     %assign a minimum and maximum number of possible passengers to each
     %type of aircraft
     r=rand;
@@ -167,14 +177,16 @@ for i=1:PN*NBays
         lb(i,1) =0;
         ctype(1,i)='B';
 end
-
-d=[7 4 3 5];
+D = readtable ('distance.xlsx');
+d_aux=D(:,{'A','B','C','D'});
+d=table2array(d_aux);
 f=[];
 %set the vector of the coefficients of the objective function for distance
 %between bays and gates
 for i=1:NBays
     for j=1:PN
-        f=[f,d(i)*p(j)*2];
+      %  f=[f,d(i,((plane(j).terminal)*p(j)*2)]; I don't understand why it
+      %  doesn't work
     end
 end
 
