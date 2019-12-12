@@ -14,6 +14,7 @@ BayComplianceData = readtable('BayComplianceMatrix.xlsx','ReadRowNames',true,'Re
 PN = height(data);
 
 for i = 1:PN
+    %Get the data from the time from the excel
     plane(i).AT = str2num(erase(string(data.Arrival(i)),':'));
     plane(i).DT = str2num(erase(string(data.Departure(i)),':'));
     plane(i).P = data.Passengers(i);
@@ -38,26 +39,31 @@ for i = 1:PN
         plane(i).Type = -1; % Invalid aircraft type
     end
     
+    %assign a minimum and maximum number of possible passengers to each
+    %type of aircraft
     r=rand
     switch plane(i).Type
         case 1
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane(i).Passenger_min =416
+           plane(i).Passenger_max =524
         case 2
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane(i).Passenger_min =301
+           plane(i).Passenger_max =368
+        case 3
+           plane(i).Passenger_min =242
+           plane(i).Passenger_max =330
         case 4
-          plane(i).Passenger_min =50
-          plane(i).Passenger_max =100
+           plane(i).Passenger_min =85
+           plane(i).Passenger_max =215
         case 5
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane(i).Passenger_min =68
+           plane(i).Passenger_max =78
         case -1
-           plane(i).Passenger_min =50
-           plane(i).Passenger_max =100
+           plane(i).Passenger_min =0
+           plane(i).Passenger_max =0
     end
-    
-    plane(i).Passenger= floor((plane(i).Passenger_max - plane(i).Passenger_min)*r) + plane(i).Passenger_max;
+    %assign a random number of passengers to each plane considering the limits
+    plane(i).Passenger= floor((plane(i).Passenger_max - plane(i).Passenger_min)*r) + plane(i).Passenger_min;
     
 end
 
