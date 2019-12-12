@@ -40,6 +40,7 @@ for i = 1:PN
 end
 
 %% ORDERING DATA
+p=[];
 for i = 1:PN
     plane(PN+1).AT = 2500;
 
@@ -52,6 +53,7 @@ for i = 1:PN
     end
     plane(index) = plane(i);
     plane(i) = plane(PN+1);
+    p =[p,plane(i).P];
 end
 
 %% OVERLAPPING MATRIX OV
@@ -83,72 +85,64 @@ OV = OV_initial';
 % F = readtable ('flight data.xlsx');
 % D = readtable ('distance.xlsx');
 % 
+
+
+%% Creating matrix for the constraints
+OVtest= [1 0 0
+    1 1 0
+    0 1 1];
 Nflights=PN;
 Bays=2;
-Gates=2;
 
-%% Creating matrix C for the constraints
+Aeq=[];
+    for j=1:Bays
+         Aeq=[Aeq,diag(diag(ones(PN)))];
+    end
+
+
 
 for i=1:Nflights
-    for j=1:Bays*Gates*Nflights
-        if ((1+floor((j-1)/(Bays*Gates)))==i)
-            C(i,j)=1;
+    NULL(i,i)=0
+end
+Aineq=[];
+for i=1:Bays
+    L=[];
+    for j=1:Bays
+        if j==i
+            L=[L,OV];
         else
-            C(i,j)=0;
+            L=[L,NULL];
         end
     end
+    Aineq=[Aineq;L];
+end 
+
+for i=1:Nflights*Bays
+        rightside_ineq(i,1) =1;
 end
 
-for i=Nflights+1:(Nflights+Gates)
-    aux=0;
-    for j=1:Bays*Gates*Nflights
-       if (j==i-Nflights) || (j==(i-Nflights)+(Gates*aux))
-            C(i,j)=1;
-            aux=aux+1;
-       else
-            C(i,j)=0;
-       end
-    end
+for i=1:Nflights
+        rightside_eq(i,1) =1;
 end
 
-aux1=0;
-for i=Nflights+Gates+1:(Nflights+Gates+Bays)
-    aux2=0;
-    for j=1:Bays*Gates*Nflights-2
-       if (j==i-Nflights-Gates) || (j==(i-Nflights-Gates)+(Bays*Gates*aux2))
-            C(i,[j+(aux1*(Gates - 1)) j+(aux1*(Gates - 1))+1])=[1 1];
-            j=j+1;
-            aux2=aux2+1;
-       else
-            C(i,j+(aux1*(Gates - 1))+1)=0;
-       end
-    end
-    aux1=aux1+1;
-end
-
-for i=1:Nflights+Gates+Bays
-        rightside(i,1) =1;
-end
-
-for i=1:Nflights*Gates*Bays
+for i=1:Nflights*Bays
         ub(i,1) =1;
 end
 
-for i=1:Nflights*Gates*Bays
+for i=1:Nflights*Bays
         lb(i,1) =0;
 end
 
-d=[0 3 5 6];
-f=[d d];
-
-for i=1:Nflights*Gates*Bays
+for i=1:Nflights*Bays
     ctype(1,i)='B';
 end
 
+d=[7 4];
+f=[];
+for i=1:Bays
+    for j=1:Nflights
+        f=[f,d(i)*p(j)*2];
+    end
+end
 
-Aeq=C([1:2],:);
-Aineq=C([3:6],:);
-bineq=rightside([3:6]);
-beq=rightside([1:2]);
-
-x=cplexmilp(f, Aineq, bineq, Aeq, beq, [],[],[],lb, ub, ctype);
+ x=cplexmilp(f, Aineq, rightside_ineq, Aeq, rightside_eq, [],[],[],lb, ub, ctype);
