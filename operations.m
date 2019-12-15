@@ -14,7 +14,8 @@ BayComplianceData = readtable('BayComplianceMatrix.xlsx','ReadRowNames',true,'Re
 PN = height(data);
 
 for i = 1:PN
-    %Get the data from the time from the excel
+    %Get the data from the time from the excel, with some corrections it
+    %might happen in the schedule
     plane(i).AT = str2num(erase(string(data.Arrival(i)),':'));
     plane(i).DT = str2num(erase(string(data.Departure(i)),':'));
     plane(i).P = data.Passengers(i);
@@ -39,6 +40,7 @@ for i = 1:PN
         plane(i).Type = -1; % Invalid aircraft type
     end
     
+    %assign a number to each terminal
     if     strcmp(data.Terminal(i),'A')
         plane(i).terminal = 1;
     elseif strcmp(data.Terminal(i),'B')
@@ -93,6 +95,25 @@ for i = 1:PN
     plane(i) = plane(PN+1);
     p =[p,plane(i).P];
 end
+
+%% INCORPORATE THE BUFFER TIME FOR EACH PLANE 
+BT=10; %in minutes
+for i=1:PN
+    plane(i).AT=plane(i).AT-BT;
+    plane(i).DT=plane(i).DT+BT;
+    if(mod(plane(i).AT,100) >=60)%correction of the time, to be presented as hours:minutes
+        minutes=mod(plane(i).AT,100)-60;
+        plane(i).AT=floor(plane(i).AT/100)*100+100+minutes
+    else
+    end
+    
+    if(mod(plane(i).DT,100) >=60)%correction of the time, to be presented as hours:minutes
+        minutes=mod(plane(i).DT,100)-60;
+        plane(i).DT=floor(plane(i).DT/100)*100+100+minutes
+    else
+    end
+end
+
 
 %% OVERLAPPING MATRIX OV
 % From the time data, we compute a matrix that shows which planes
@@ -177,16 +198,16 @@ for i=1:PN*NBays
         lb(i,1) =0;
         ctype(1,i)='B';
 end
-D = readtable ('distance.xlsx');
-d_aux=D(:,{'A','B','C','D'});
-d=table2array(d_aux);
+%incorporate distance matrix that tells us the distance from a fixed
+%terminal, pre-assigned before to every plane.
+d=readmatrix('distance.xlsx');
+d(:,1) = [];
 f=[];
-%set the vector of the coefficients of the objective function for distance
-%between bays and gates
+% set the vector of the coefficients of the objective function for distance
+% between bays and gates
 for i=1:NBays
     for j=1:PN
-      %  f=[f,d(i,((plane(j).terminal)*p(j)*2)]; I don't understand why it
-      %  doesn't work
+       f=[f,d(i,(plane(j).terminal))*p(j)*2];
     end
 end
 
