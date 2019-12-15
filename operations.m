@@ -8,10 +8,19 @@ clc
 addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\matlab\x64_win64');
 addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\examples\src\matlab');
 
-data = readtable('SampleDataWithAircraftType.xlsx','ReadRowNames',true,'ReadVariableNames',true);
-BayComplianceData = readtable('BayComplianceMatrix.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+AllData = readtable('SampleDataWithAircraftType.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+AllBayComplianceData = importdata('BayComplianceMatrix.xlsx');
 
-PN = height(data);
+% Define number of planes and number of bays used
+% PN = height(data); % (The old way.)
+PN = 3;
+NBays = 4;
+data = AllData(1:PN,:);
+BayComplianceData = AllBayComplianceData(1:Bays,:);
+% Distances to bays
+d=[7 4 3];
+
+%%
 
 for i = 1:PN
     %Get the data from the time from the excel, with some corrections it
@@ -148,7 +157,7 @@ OV = OV_initial';
 
 
 %% Creating matrix for the constraints
-NBays=4;
+%NBays=4; (Moved to top)
 %In cplex, the constraint matrix has to be separted in equality constraint
 %matrix and inequality constraint matrix
 
