@@ -16,9 +16,9 @@ AllBayComplianceData = importdata('BayComplianceMatrix.xlsx');
 PN = 3;
 NBays = 4;
 data = AllData(1:PN,:);
-BayComplianceData = AllBayComplianceData(1:Bays,:);
+BayComplianceData = AllBayComplianceData(1:NBays,:);
 % Distances to bays
-d=[7 4 3];
+% d=[7 4 3];
 
 %%
 
