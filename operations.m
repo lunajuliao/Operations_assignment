@@ -13,7 +13,7 @@ AllBayComplianceData = importdata('BayComplianceMatrix.xlsx');
 
 % Define number of planes and number of bays used
 % PN = height(data); % (The old way.)
-PN = 3;
+PN = 5;
 NBays = 4;
 data = AllData(1:PN,:);
 BayComplianceData = AllBayComplianceData(1:NBays,:);
