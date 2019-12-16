@@ -18,7 +18,14 @@ NBays = 4;
 data = AllData(1:PN,:);
 BayComplianceData = AllBayComplianceData(1:NBays,:);
 % Distances to bays
-% d=[7 4 3];
+% Please indicate which version of MATLAB you are using.
+MATLAB_VERSION = 1; % 0 for R2018b, 1 for R2019b.
+if MATLAB_VERSION
+    d = readmatrix('distance.xlsx');
+    d(:,1) = [];
+else
+    d = importdata('distance_R2018b.xlsx');
+end
 
 %%
 
@@ -209,8 +216,10 @@ for i=1:PN*NBays
 end
 %incorporate distance matrix that tells us the distance from a fixed
 %terminal, pre-assigned before to every plane.
-d=readmatrix('distance.xlsx');
-d(:,1) = [];
+
+% d=readmatrix('distance.xlsx'); (moved to top)
+% d(:,1) = [];
+
 f=[];
 % set the vector of the coefficients of the objective function for distance
 % between bays and gates
