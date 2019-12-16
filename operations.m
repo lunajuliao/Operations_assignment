@@ -164,6 +164,20 @@ OV = OV_initial';
 % D = readtable ('distance.xlsx');
 % 
 
+%% MATRIX RELATING PLANE TYPE AND BAY COMPATIBILITY VECTOR
+PlaneCompatibilityVectors = [];
+for i = 1:PN
+    PlaneCompatibilityVectors = [PlaneCompatibilityVectors BayComplianceData(:,plane(i).Type)];
+end
+RHS_comp =[];
+for i = 1:NBays
+    RHS_comp = [RHS_comp;PlaneCompatibilityVectors(i,:)'];
+end
+% This right hand side has to be an inequality constraint
+% We have to expand the inequality constraint coefficients with a unity
+% matrix with the dimensions of the number of decision variables.
+% We add RHS_comp as the right hand side.
+
 
 %% Creating matrix for the constraints
 %NBays=4; (Moved to top)
@@ -230,6 +244,11 @@ for i=1:NBays
        f=[f,d(i,(plane(j).terminal))*p(j)*2];
     end
 end
+
+%% Adding Bay Compliance constraints
+% Number of Decision variables = Bays*PN
+Aineq = [Aineq;diag(diag(ones(NBays*PN)))];
+rightside_ineq = [rightside_ineq; RHS_comp];
 
 %cplex implementation 
  x=cplexmilp(f, Aineq, rightside_ineq, Aeq, rightside_eq, [],[],[],lb, ub, ctype);
