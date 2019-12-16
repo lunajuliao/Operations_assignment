@@ -24,7 +24,9 @@ if MATLAB_VERSION
     d = readmatrix('distance.xlsx');
     d(:,1) = [];
 else
-    d = importdata('distance_R2018b.xlsx');
+    temp = importdata('distance_R2018b.xlsx'); % Temporary variable
+    d = zeros(size(temp,1),size(temp,2));
+    d = str2double(temp);
 end
 
 %%
