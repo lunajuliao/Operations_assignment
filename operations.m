@@ -252,3 +252,54 @@ rightside_ineq = [rightside_ineq; RHS_comp];
 
 %cplex implementation 
  x=cplexmilp(f, Aineq, rightside_ineq, Aeq, rightside_eq, [],[],[],lb, ub, ctype);
+
+%% DATA DISPLAYING
+% x is the bay number
+
+%building x_output - a matrix which has the decision variables varying by
+%plane on the columns and by bays on the rows
+x_output= [];
+
+for i = 1:NBays
+ x_output = [x_output; x([(i-1)*PN+1: (i-1)*PN+5])'];
+%  [(i-1)*PN+1: (i-1)*PN+5]
+end
+% x_output = x_output';
+% x_output
+a1=[];
+for i = 1 : PN
+    a1(i, 1:3) = [(plane(i).AT-mod(plane(i).AT, 100))/100, mod(plane(i).AT, 100), 0];
+     a1(i+PN, 1:3) = [(plane(i).DT-mod(plane(i).DT, 100))/100, mod(plane(i).DT, 100), 0];
+    plane(i).Color = [i*40, i*20, 50*i]./255;
+end
+
+
+for k = 1:NBays
+
+% b is a vector with the number of the bay, for each plane i have to give a 
+%     plot command with specify the color of the line
+
+bayn = k;
+b = [bayn, bayn];
+
+
+for i = 1 : PN
+    
+    if x_output(k,i)==1
+        a = [ a1(i, 1:3);  a1(i+PN, 1:3)];
+        c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
+        d=strcat(c(:,1),':',c(:,2),':',c(:,3));
+        plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+        hold on;
+        datetick('x','HH:MM:SS')  
+
+        
+     end
+    
+    
+end
+ 
+end
+grid on
+ylim([0, NBays+1]);
+legend
