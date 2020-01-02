@@ -8,10 +8,28 @@ clc
 addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\matlab\x64_win64');
 addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\examples\src\matlab');
 
-data = readtable('SampleDataWithAircraftType.xlsx','ReadRowNames',true,'ReadVariableNames',true);
-BayComplianceData = readtable('BayComplianceMatrix.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+AllData = readtable('SampleDataWithAircraftType.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+AllBayComplianceData = importdata('BayComplianceMatrix.xlsx');
 
-PN = height(data);
+% Define number of planes and number of bays used
+% PN = height(data); % (The old way.)
+PN = 5;
+NBays = 4;
+data = AllData(1:PN,:);
+BayComplianceData = AllBayComplianceData(1:NBays,:);
+% Distances to bays
+% Please indicate which version of MATLAB you are using.
+MATLAB_VERSION = 1; % 0 for R2018b, 1 for R2019b.
+if MATLAB_VERSION
+    d = readmatrix('distance.xlsx');
+    d(:,1) = [];
+else
+    temp = importdata('distance_R2018b.xlsx'); % Temporary variable
+    d = zeros(size(temp,1),size(temp,2));
+    d = str2double(temp);
+end
+
+%%
 
 for i = 1:PN
     %Get the data from the time from the excel, with some corrections it
@@ -146,9 +164,23 @@ OV = OV_initial';
 % D = readtable ('distance.xlsx');
 % 
 
+%% MATRIX RELATING PLANE TYPE AND BAY COMPATIBILITY VECTOR
+PlaneCompatibilityVectors = [];
+for i = 1:PN
+    PlaneCompatibilityVectors = [PlaneCompatibilityVectors BayComplianceData(:,plane(i).Type)];
+end
+RHS_comp =[];
+for i = 1:NBays
+    RHS_comp = [RHS_comp;PlaneCompatibilityVectors(i,:)'];
+end
+% This right hand side has to be an inequality constraint
+% We have to expand the inequality constraint coefficients with a unity
+% matrix with the dimensions of the number of decision variables.
+% We add RHS_comp as the right hand side.
+
 
 %% Creating matrix for the constraints
-NBays=4;
+%NBays=4; (Moved to top)
 %In cplex, the constraint matrix has to be separted in equality constraint
 %matrix and inequality constraint matrix
 
@@ -200,8 +232,10 @@ for i=1:PN*NBays
 end
 %incorporate distance matrix that tells us the distance from a fixed
 %terminal, pre-assigned before to every plane.
-d=readmatrix('distance.xlsx');
-d(:,1) = [];
+
+% d=readmatrix('distance.xlsx'); (moved to top)
+% d(:,1) = [];
+
 f=[];
 % set the vector of the coefficients of the objective function for distance
 % between bays and gates
@@ -211,5 +245,61 @@ for i=1:NBays
     end
 end
 
+%% Adding Bay Compliance constraints
+% Number of Decision variables = Bays*PN
+Aineq = [Aineq;diag(diag(ones(NBays*PN)))];
+rightside_ineq = [rightside_ineq; RHS_comp];
+
 %cplex implementation 
  x=cplexmilp(f, Aineq, rightside_ineq, Aeq, rightside_eq, [],[],[],lb, ub, ctype);
+
+%% DATA DISPLAYING
+% x is the bay number
+
+%building x_output - a matrix which has the decision variables varying by
+%plane on the columns and by bays on the rows
+x_output= [];
+
+for i = 1:NBays
+ x_output = [x_output; x([(i-1)*PN+1: (i-1)*PN+5])'];
+%  [(i-1)*PN+1: (i-1)*PN+5]
+end
+% x_output = x_output';
+% x_output
+a1=[];
+for i = 1 : PN
+    a1(i, 1:3) = [(plane(i).AT-mod(plane(i).AT, 100))/100, mod(plane(i).AT, 100), 0];
+     a1(i+PN, 1:3) = [(plane(i).DT-mod(plane(i).DT, 100))/100, mod(plane(i).DT, 100), 0];
+    plane(i).Color = [i*40, i*20, 50*i]./255;
+end
+
+
+for k = 1:NBays
+
+% b is a vector with the number of the bay, for each plane i have to give a 
+%     plot command with specify the color of the line
+
+bayn = k;
+b = [bayn, bayn];
+
+
+for i = 1 : PN
+    
+    if x_output(k,i)==1
+        a = [ a1(i, 1:3);  a1(i+PN, 1:3)];
+        c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
+        d=strcat(c(:,1),':',c(:,2),':',c(:,3));
+        plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+        hold on;
+        datetick('x','HH:MM:SS')  
+
+        
+     end
+    
+    
+end
+ 
+end
+grid on
+ylim([0, NBays+1]);
+legend
