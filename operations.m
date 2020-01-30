@@ -114,26 +114,44 @@ for i = 1:PN
     p =[p,plane(i).P];
 end
 
+%% INCORPORATE THE TOWING TIME FOR EACH PLANE 
+TT=30; %in minutes
+for i=1:PN
+    plane(i).ATT=plane(i).AT+TT;
+    plane(i).DTT=plane(i).DT-TT;
+    if(mod(plane(i).ATT,100) >=60)%correction of the time, to be presented as hours:minutes
+        minutes=mod(plane(i).ATT,100)-60;
+        plane(i).ATT=floor(plane(i).ATT/100)*100+100+minutes;
+    else
+    end
+    
+    if(mod(plane(i).DTT,100) >=60)%correction of the time, to be presented as hours:minutes
+        minutes=100-mod(plane(i).DTT,100);
+        plane(i).DTT=floor(plane(i).DTT/100)*100+60-minutes;
+    else
+    end
+end
+
 %% INCORPORATE THE BUFFER TIME FOR EACH PLANE 
 BT=10; %in minutes
 for i=1:PN
     plane(i).AT=plane(i).AT-BT;
     plane(i).DT=plane(i).DT+BT;
     if(mod(plane(i).AT,100) >=60)%correction of the time, to be presented as hours:minutes
-        minutes=mod(plane(i).AT,100)-60;
-        plane(i).AT=floor(plane(i).AT/100)*100+100+minutes
+        minutes=100-mod(plane(i).AT,100);
+        plane(i).AT=floor(plane(i).AT/100)*100+60-minutes;
     else
     end
     
     if(mod(plane(i).DT,100) >=60)%correction of the time, to be presented as hours:minutes
         minutes=mod(plane(i).DT,100)-60;
-        plane(i).DT=floor(plane(i).DT/100)*100+100+minutes
+        plane(i).DT=floor(plane(i).DT/100)*100+100+minutes;
     else
     end
 end
 
 
-%% OVERLAPPING MATRIX OV
+%% OVERLAPPING MATRIX OV (overlap)
 % From the time data, we compute a matrix that shows which planes
 % overlap and since they are ordered, we use only the lower triangular(+diagonal) part of the matrix.
 OV_initial = zeros(PN);
@@ -146,7 +164,18 @@ for i = 1:PN
 end
 OV = OV_initial';
 
-    
+%% OVERLAPPING MATRIX OVT (overlap towing)
+% From the time data, we compute a matrix that shows which planes
+% overlap and since they are ordered, we use only the lower triangular(+diagonal) part of the matrix.
+OV_initial = zeros(PN);
+for i = 1:PN
+    for k = i:PN
+        if plane(i).DT >= plane(k).AT
+            OV_initial(i,k) = 1;
+        end
+    end
+end
+OV = OV_initial';
             
 %%
 
