@@ -258,9 +258,7 @@ Aeq=[];
     for j=1:NBays
          Aeq=[Aeq,eye(PN)];
     end
-Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq)); ...
-        zeros(size(Aeq)), Aeq, zeros(size(Aeq))...
-        zeros(size(Aeq)), zeros(size(Aeq)), Aeq];
+Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq))];
 %%
 %Computation of inequality constraint matrix:
 %1-bay and plane constraint: whenever there is an extra plane, we rewrite a
@@ -270,12 +268,12 @@ Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq)); ...
 
 %set the vector of the right side of the inequality constraints
 for i=1:size(Aineq, 1)
-        rightside_ineq(i,1) =1;
+        rightside_ineq(i,1) = 1;
 end
 
 %set the vector of the right side of the equality constraints
 for i=1:size(Aeq, 1)
-        rightside_eq(i,1) =1;
+        rightside_eq(i,1) = 1;
 end
 
 %set the vector of the upper bound of the decision variables
@@ -300,7 +298,7 @@ for i=1:NBays
     for j=1:PN
        f(c)=d(i,(plane(j).terminal))*plane(j).Passenger;
        f(c+PN*NBays) = f(c);
-       f(c+2*PN*NBays) = 10000;
+       f(c+2*PN*NBays) = 10;
        c=c+1;
     end
 end
@@ -313,14 +311,25 @@ end
 %cplex implementation 
  x=cplexmilp(f, Aineq, rightside_ineq, Aeq, rightside_eq, [],[],[],lb, ub, ctype);
 %%
-result=[];
+arriving=[];
+towings = [];
+leaving = [];
+x=x';
 for i = 1:NBays
-result = [result; x(
+arriving = [arriving; x(1+PN*(i-1):PN*i)];
+leaving = [leaving; x(1+PN*(i-1)+PN*NBays:PN*i+PN*NBays)];
+towings = [towings; x(1+PN*(i-1)+PN*NBays*2:PN*i+PN*NBays*2)];
+
 end
 
 
- 
- 
+ fprintf('Every column corresponds to a plane, every row corresponds to a bay\n\n');
+ fprintf('X_i,k matrix \n\n');
+ disp(arriving);
+ fprintf('X_i+PN,k matrix \n');
+ disp(leaving);
+ fprintf('V_i,k matrix \n\n');
+ disp(towings);
  
 %% DATA DISPLAYING
 % x is the bay number
