@@ -186,7 +186,10 @@ for i=1:NBays
 for i=1:NBays
     T=[T;Aux];
 end
-Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(PN*NBays),2*T,-eye(PN*NBays)];
+% Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(PN*NBays),T,-T];
+Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(PN, PN*NBays),Aux,-Aux];
+
+
 %%
 
 % for i = 1:length(ts)
@@ -202,9 +205,11 @@ Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(PN*NBays),2*T,-eye(PN*NBays)
 % F = readtable ('flight data.xlsx');
 % D = readtable ('distance.xlsx');
 % 
-OVdb = zeros(PN, 3*PN*NBays);
-OVab = zeros(PN, 3*PN*NBays);
 
+OVab = zeros(PN, 3*PN*NBays);
+OVdb = zeros(PN, 3*PN*NBays);
+
+% filling the overlapping matrix for arriving planes
 for i=1:PN
     for j=1:PN
         if (plane(i).AT>plane(j).AT && plane(i).AT<plane(j).DT)
@@ -225,6 +230,7 @@ end
 
 
 
+% filling the overlapping matrix for departing planes
 
 for i=1:PN
     for j=1:PN
@@ -244,6 +250,9 @@ end
 
 OVd = OVdb;
 OVa = OVab;
+
+%creating the Aineq matrix - shifting the base (OVab and OVdb) matrices of
+%PN position <-> apllying the same constraint for every bay
 for i =1:NBays-1
 %     PN*(3*NBays-i)
     OVd = [OVd; OVdb(:,PN*(3*NBays-i)+1:end), OVdb(:,1:PN*(3*NBays-i))];
@@ -252,7 +261,9 @@ end
 
 
 
-OV = [OVa;OVd; -eye(PN*NBays), -T, 3*eye(PN*NBays);zeros(PN*NBays), T,zeros(PN*NBays)];
+OV = [OVa;OVd;...
+    eye(PN*NBays), T, -eye(PN*NBays);...
+    zeros(PN,PN*NBays), Aux,zeros(PN,PN*NBays)]; %departing bays for each plane <=1
 Aineq=OV;
 
 %% MATRIX RELATING PLANE TYPE AND BAY COMPATIBILITY VECTOR
@@ -284,10 +295,10 @@ for i=1:size(Aineq, 1)
 end
 
 %set the vector of the right side of the equality constraints
-for i=1:size(Aeq, 1)
-        rightside_eq(i,1) = 1;
-end
-
+% for i=1:size(Aeq, 1)
+%         rightside_eq(i,1) = 1;
+% end
+rightside_eq = [ones(PN,1);zeros(PN,1)];
 %set the vector of the upper bound of the decision variables
 %set the vector of the lower bound of the decision variables
 %set the vector that states the decision variables are binary or integer

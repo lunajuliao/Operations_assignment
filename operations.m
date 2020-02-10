@@ -23,6 +23,8 @@ MATLAB_VERSION = 1; % 0 for R2018b, 1 for R2019b.
 if MATLAB_VERSION
     d = readmatrix('distance.xlsx');
     d(:,1) = [];
+    d(1,:) = [];
+
 else
     temp = importdata('distance_R2018b.xlsx'); % Temporary variable
     d = zeros(size(temp,1),size(temp,2));
