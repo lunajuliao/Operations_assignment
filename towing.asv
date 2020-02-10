@@ -177,16 +177,7 @@ Aeq=[];
     for j=1:NBays
          Aeq=[Aeq,eye(PN)];
     end
-    
-    T=[];
-Aux=[];
-for i=1:NBays
-      Aux=[Aux,eye(PN)];
-    end
-for i=1:NBays
-    T=[T;Aux];
-end
-Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(PN*NBays),2*T,-eye(PN*NBays)];
+Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq))];
 %%
 
 % for i = 1:length(ts)
@@ -249,10 +240,23 @@ for i =1:NBays-1
     OVd = [OVd; OVdb(:,PN*(3*NBays-i)+1:end), OVdb(:,1:PN*(3*NBays-i))];
     OVa = [OVa; OVab(:,PN*(3*NBays-i)+1:end), OVab(:,1:PN*(3*NBays-i))];
 end
+T=[]
+Aux=[]
+for i=1:NBays
+      Aux=[Aux,eye(PN)];
+    end
+for i=1:NBays
+    T=[T;Aux];
+end
 
+for i=1:NBays
+      Aux2=[Aux,eye(PN)];
+    end
+for i=1:NBays
+    T=[T;Aux];
+end
 
-
-OV = [OVa;OVd; -eye(PN*NBays), -T, 3*eye(PN*NBays);zeros(PN*NBays), T,zeros(PN*NBays)];
+OV = [OVa;OVd; eye(PN*NBays), -T, 3*eye(PN*NBays)];
 Aineq=OV;
 
 %% MATRIX RELATING PLANE TYPE AND BAY COMPATIBILITY VECTOR
