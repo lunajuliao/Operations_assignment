@@ -319,9 +319,9 @@ c=1;
 % between bays and gates
 for i=1:NBays
     for j=1:PN
-       f(c)=d(i,(plane(j).terminal))*plane(j).Passenger;
-       f(c+PN*NBays) = f(c);
-       f(c+2*PN*NBays) = 10;
+       f(c)=2* d(i,(plane(j).terminal))*plane(j).Passenger;
+       f(c+PN*NBays) = f(c)/2;
+       f(c+2*PN*NBays) = - f(c)/2 +100;
        c=c+1;
     end
 end
@@ -340,8 +340,9 @@ leaving = [];
 x=x';
 for i = 1:NBays
 arriving = [arriving; x(1+PN*(i-1):PN*i)];
-leaving = [leaving; x(1+PN*(i-1)+PN*NBays:PN*i+PN*NBays)];
 towings = [towings; x(1+PN*(i-1)+PN*NBays*2:PN*i+PN*NBays*2)];
+leaving = [leaving; x(1+PN*(i-1)+PN*NBays:PN*i+PN*NBays)];
+
 
 end
 
@@ -349,10 +350,11 @@ end
  fprintf('Every column corresponds to a plane, every row corresponds to a bay\n\n');
  fprintf('X_i,k matrix \n\n');
  disp(arriving);
- fprintf('X_i+PN,k matrix \n');
- disp(leaving);
  fprintf('V_i,k matrix \n\n');
  disp(towings);
+ fprintf('X_i+PN,k matrix \n');
+ disp(leaving);
+
  
 %% DATA DISPLAYING
 % x is the bay number
