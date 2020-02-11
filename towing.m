@@ -280,7 +280,7 @@ end
 % matrix with the dimensions of the number of decision variables.
 % We add RHS_comp as the right hand side.
 
-PlaneComplianceVector = [PlaneComplianceVector, PlaneComplianceVector, zeros(1,length(PlaneComplianceVector))];
+PlaneComplianceVector = [PlaneComplianceVector, PlaneComplianceVector, ones(1,length(PlaneComplianceVector))];
 
 for i =1:size(Aeq, 1)
    Aeq(i,:) = Aeq(i,:).*PlaneComplianceVector;
@@ -331,7 +331,7 @@ for i=1:NBays
     for j=1:PN
        f(c)=2* d(i,(plane(j).terminal))*plane(j).Passenger;
        f(c+PN*NBays) = f(c)/2;
-       f(c+2*PN*NBays) = - f(c)/2 +100;
+       f(c+2*PN*NBays) = - f(c)/2 + 100;
        c=c+1;
     end
 end
