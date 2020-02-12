@@ -31,6 +31,7 @@ end
 NBays = size(d,1);
 BayComplianceData = AllBayComplianceData(1:NBays,:);
 
+color = string(importdata('Colors.xlsx')); %Picking up some colors
 %%
 
 for i = 1:PN
@@ -253,18 +254,28 @@ OV = [OVa;OVd;...
 Aineq=OV;
 
 %% MATRIX RELATING PLANE TYPE AND BAY COMPATIBILITY VECTOR
-PlaneCompatibilityVectors = [];
+PlaneComplianceMatrix = [];
 for i = 1:PN
-    PlaneCompatibilityVectors = [PlaneCompatibilityVectors BayComplianceData(:,plane(i).Type)];
+     PlaneComplianceMatrix = [PlaneComplianceMatrix, BayComplianceData(:,plane(i).Type)];
 end
-RHS_comp =[];
+PlaneComplianceVector =[];
 for i = 1:NBays
-    RHS_comp = [RHS_comp;PlaneCompatibilityVectors(i,:)'];
+    PlaneComplianceVector = [PlaneComplianceVector,PlaneComplianceMatrix(i,:)];
 end
 % This right hand side has to be an inequality constraint
 % We have to expand the inequality constraint coefficients with a unity
 % matrix with the dimensions of the number of decision variables.
 % We add RHS_comp as the right hand side.
+
+PlaneComplianceVector = [PlaneComplianceVector, PlaneComplianceVector, ones(1,length(PlaneComplianceVector))];
+
+for i =1:size(Aeq, 1)
+   Aeq(i,:) = Aeq(i,:).*PlaneComplianceVector;
+end
+
+for i =1:size(Aineq, 1)
+   Aineq(i,:) = Aineq(i,:).*PlaneComplianceVector;
+end
 
 
 
@@ -307,7 +318,7 @@ for i=1:NBays
     for j=1:PN
        f(c)=2* d(i,(plane(j).terminal))*plane(j).Passenger;
        f(c+PN*NBays) = f(c)/2;
-       f(c+2*PN*NBays) = - f(c)/2 +100;
+       f(c+2*PN*NBays) = - f(c)/2 + 100;
        c=c+1;
     end
 end
@@ -357,9 +368,11 @@ end
 % x_output
 a1=[];
 for i = 1 : PN
-    a1(i, 1:3) = [(plane(i).AT-mod(plane(i).AT, 100))/100, mod(plane(i).AT, 100), 0];
-     a1(i+PN, 1:3) = [(plane(i).DT-mod(plane(i).DT, 100))/100, mod(plane(i).DT, 100), 0];
-    plane(i).Color = [i*40, i*20, 50*i]./255;
+    plane(i).at = [(plane(i).AT-mod(plane(i).AT, 100))/100, mod(plane(i).AT, 100), 0];
+    plane(i).att = [(plane(i).ATT-mod(plane(i).ATT, 100))/100, mod(plane(i).ATT, 100), 0];
+    plane(i).dt = [(plane(i).DT-mod(plane(i).DT, 100))/100, mod(plane(i).DT, 100), 0];
+    plane(i).dtt = [(plane(i).DTT-mod(plane(i).DTT, 100))/100, mod(plane(i).DTT, 100), 0];
+    plane(i).Color = color(i);
 end
 
 
@@ -368,19 +381,48 @@ for k = 1:NBays
 % b is a vector with the number of the bay, for each plane i have to give a 
 %     plot command with specify the color of the line
 
-bayn = k;
-b = [bayn, bayn];
-
+b = [k,k];
 
 for i = 1 : PN
     
-    if x_output(k,i)==1
-        a = [ a1(i, 1:3);  a1(i+PN, 1:3)];
-        c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
-        d=strcat(c(:,1),':',c(:,2),':',c(:,3));
-        plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
-        hold on;
-        datetick('x','HH:MM:SS')  
+    if arriving(k,i)==1
+        if (towings(k,i) == 0)
+            a = [ plane(i).at;  plane(i).dt];
+            c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
+            d=strcat(c(:,1),':',c(:,2),':',c(:,3));
+            plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+            hold on;
+            datetick('x','HH:MM:SS')  
+            
+        elseif (towings(k,i) == 1)
+            a = [ plane(i).at;  plane(i).att];
+            c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
+            d=strcat(c(:,1),':',c(:,2),':',c(:,3));
+            plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+            hold on;
+            datetick('x','HH:MM:SS')  
+            
+        else
+            disp(towings(k,i));
+            error('towings (i,k) value is not binary');
+        end
+        
+        if (leaving(k,i) == 1)
+            a = [ plane(i).dtt;  plane(i).dt];
+            c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
+            d=strcat(c(:,1),':',c(:,2),':',c(:,3));
+            plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+            hold on;
+            datetick('x','HH:MM:SS')  
+            
+        end
+        
+        
+%         c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
+%         d=strcat(c(:,1),':',c(:,2),':',c(:,3));
+%         plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+%         hold on;
+%         datetick('x','HH:MM:SS')  
 
         
      end
@@ -391,4 +433,3 @@ end
 end
 grid on
 ylim([0, NBays+1]);
-legend
