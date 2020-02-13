@@ -392,8 +392,8 @@ b = [k,k];
 
 for i = 1 : PN
     
-    if arriving(k,i)==1
-        if (towings(k,i) == 0)
+    
+        if (towings(k,i) == 0 && arriving(k,i)==1)
             a = [ plane(i).at;  plane(i).dt];
             c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
             d=strcat(c(:,1),':',c(:,2),':',c(:,3));
@@ -401,7 +401,7 @@ for i = 1 : PN
             hold on;
             datetick('x','HH:MM:SS')  
             
-        elseif (towings(k,i) == 1)
+        elseif (towings(k,i) == 1 && arriving(k,i)==1)
             a = [ plane(i).at;  plane(i).att];
             c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
             d=strcat(c(:,1),':',c(:,2),':',c(:,3));
@@ -409,12 +409,9 @@ for i = 1 : PN
             hold on;
             datetick('x','HH:MM:SS')  
             
-        else
-            disp(towings(k,i));
-            error('towings (i,k) value is not binary');
         end
         
-        if (leaving(k,i) == 1)
+        if (leaving(k,i) == 1 && sum(leaving(:,17)) )
             a = [ plane(i).dtt;  plane(i).dt];
             c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
             d=strcat(c(:,1),':',c(:,2),':',c(:,3));
@@ -432,7 +429,7 @@ for i = 1 : PN
 %         datetick('x','HH:MM:SS')  
 
         
-     end
+     
     
     
 end
