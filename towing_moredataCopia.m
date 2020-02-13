@@ -396,16 +396,16 @@ for i = 1 : PN
         if (towings(k,i) == 0 && arriving(k,i)==1)
             a = [ plane(i).at;  plane(i).dt];
             c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
-            d=strcat(c(:,1),':',c(:,2),':',c(:,3));
-            plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+            d1=strcat(c(:,1),':',c(:,2),':',c(:,3));
+            plot(datenum(d1,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
             hold on;
             datetick('x','HH:MM:SS')  
             
         elseif (towings(k,i) == 1 && arriving(k,i)==1)
             a = [ plane(i).at;  plane(i).att];
             c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
-            d=strcat(c(:,1),':',c(:,2),':',c(:,3));
-            plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+            d1=strcat(c(:,1),':',c(:,2),':',c(:,3));
+            plot(datenum(d1,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
             hold on;
             datetick('x','HH:MM:SS')  
             
@@ -414,8 +414,8 @@ for i = 1 : PN
         if (leaving(k,i) == 1)
             a = [ plane(i).dtt;  plane(i).dt];
             c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
-            d=strcat(c(:,1),':',c(:,2),':',c(:,3));
-            plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+            d1=strcat(c(:,1),':',c(:,2),':',c(:,3));
+            plot(datenum(d1,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
             hold on;
             datetick('x','HH:MM:SS')  
             
@@ -423,8 +423,8 @@ for i = 1 : PN
         
         
 %         c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
-%         d=strcat(c(:,1),':',c(:,2),':',c(:,3));
-%         plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
+%         d1=strcat(c(:,1),':',c(:,2),':',c(:,3));
+%         plot(datenum(d1,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
 %         hold on;
 %         datetick('x','HH:MM:SS')  
 
