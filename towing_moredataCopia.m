@@ -136,7 +136,7 @@ for i=1:PN
 end
 
 %% INCORPORATE THE BUFFER TIME FOR EACH PLANE 
-BT=10; %in minutes
+BT=15; %in minutes
 for i=1:PN
     plane(i).AT=plane(i).AT-BT;
     plane(i).DT=plane(i).DT+BT;
@@ -411,7 +411,7 @@ for i = 1 : PN
             
         end
         
-        if (leaving(k,i) == 1 && sum(leaving(:,17)) )
+        if (leaving(k,i) == 1)
             a = [ plane(i).dtt;  plane(i).dt];
             c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
             d=strcat(c(:,1),':',c(:,2),':',c(:,3));
