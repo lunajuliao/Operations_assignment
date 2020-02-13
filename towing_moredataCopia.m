@@ -136,7 +136,7 @@ for i=1:PN
 end
 
 %% INCORPORATE THE BUFFER TIME FOR EACH PLANE 
-BT=15; %in minutes
+BT=20; %in minutes
 for i=1:PN
     plane(i).AT=plane(i).AT-BT;
     plane(i).DT=plane(i).DT+BT;
