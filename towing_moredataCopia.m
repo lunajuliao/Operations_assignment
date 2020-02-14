@@ -8,33 +8,27 @@ clc
 addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\matlab\x64_win64');
 addpath('C:\Program Files\IBM\ILOG\CPLEX_Studio129\cplex\examples\src\matlab');
 
-AllData = readtable('SampleDataWithAircraftType.xlsx','ReadRowNames',true,'ReadVariableNames',true);
+%Import flight schedule data from excel file
+AllData = readtable('Data.xlsx','ReadRowNames',true,'ReadVariableNames',true);
 AllBayComplianceData = importdata('BayComplianceMatrix.xlsx');
 
-% Define number of planes and number of bays used
+% Import distance bay-terminal data from excel file
+d = readmatrix('distance.xlsx');
+d(:,1) = [];
+d(1,:) = [];
 
-PN = height(AllData); % (The old way.)
-data = AllData(1:PN,:);
-% Distances to bays
-% Please indicate which version of MATLAB you are using.
-MATLAB_VERSION = 1; % 0 for R2018b, 1 for R2019b.
-if MATLAB_VERSION
-    d = readmatrix('distance.xlsx');
-    d(:,1) = [];
-    d(1,:) = [];
-else
-    temp = importdata('distance_R2018b.xlsx'); % Temporary variable
-    d = zeros(size(temp,1),size(temp,2));
-    d = str2double(temp);
-end
-
-NBays = size(d,1);
-BayComplianceData = AllBayComplianceData(1:NBays,:);
-
+%Import color data, for the display. from excel file
 color = string(importdata('Colors.xlsx')); %Picking up some colors
-%%
 
-for i = 1:PN
+% Define number of planes and number of bays used
+AN = height(AllData);
+data = AllData(1:AN,:);
+NBays = size(d,1);
+%Define matrix for bay compliance 
+BayComplianceData = AllBayComplianceData(1:NBays,:);
+%% Organize data for the plane structure - some possible needed corrrections are also included
+
+for i = 1:AN
     %Get the data from the time from the excel, with some corrections it
     %might happen in the schedule
     plane(i).AT = str2num(erase(string(data.Arrival(i)),':'));
@@ -73,7 +67,6 @@ for i = 1:PN
     
     %assign a minimum and maximum number of possible passengers to each
     %type of aircraft
-    r=rand;
     switch plane(i).Type
         case 1
            plane(i).Passenger_min =416;
@@ -94,32 +87,31 @@ for i = 1:PN
            plane(i).Passenger_min =0;
            plane(i).Passenger_max =0;
     end
-    %assign a random number of passengers to each plane considering the limits
+    %assign a number of passengers to each plane considering the limits
     plane(i).Passenger= floor((plane(i).Passenger_max - plane(i).Passenger_min)/2) + plane(i).Passenger_min;
     
 end
 
 %% ORDERING DATA - order the flights by time of arrival and set them into a matrix
-p=[];
-for i = 1:PN
-    plane(PN+1).AT = 2500;
 
-    for j = i:PN
-        if(plane(j).AT < plane(PN+1).AT)
-            plane(PN+1) = plane(j);
+for i = 1:AN
+    plane(AN+1).AT = 2500;
+
+    for j = i:AN
+        if(plane(j).AT < plane(AN+1).AT)
+            plane(AN+1) = plane(j);
             index = j;
         end
         plane(j);
     end
     plane(index) = plane(i);
-    plane(i) = plane(PN+1);
-%     p =[p,plane(i).P];
+    plane(i) = plane(AN+1);
 end
 
 
-%% INCORPORATE THE TOWING TIME FOR EACH PLANE 
+%% Incorporate the towing time for each plane 
 TT=30; %in minutes
-for i=1:PN
+for i=1:AN
     plane(i).ATT=plane(i).AT+TT;
     plane(i).DTT=plane(i).DT-TT;
     if(mod(plane(i).ATT,100) >=60)%correction of the time, to be presented as hours:minutes
@@ -135,9 +127,9 @@ for i=1:PN
     end
 end
 
-%% INCORPORATE THE BUFFER TIME FOR EACH PLANE 
-BT=15; %in minutes
-for i=1:PN
+%% Incorporate the buffer time for each plane 
+BT=10; %in minutes
+for i=1:AN
     plane(i).AT=plane(i).AT-BT;
     plane(i).DT=plane(i).DT+BT;
     if(mod(plane(i).AT,100) >=60)%correction of the time, to be presented as hours:minutes
@@ -155,56 +147,58 @@ end
 
 
 %% OVERLAPPING MATRIX OV (overlap)
-% % From the time data, we compute a matrix that shows which planes
-% % overlap and since they are ordered, we use only the lower triangular(+diagonal) part of the matrix.
-OV_initial = zeros(PN);
-for i = 1:PN
-    for k = i:PN
-        if plane(i).DT >= plane(k).AT
-            OV_initial(i,k) = 1;
-        end
-    end
-end
-OVc = OV_initial';
+% From the time data, we compute a matrix that shows which planes
+% overlap and since they are ordered, we use only the lower triangular(+diagonal) part of the matrix.
+% OV_initial = zeros(AN);
+% for i = 1:AN
+%     for k = i:AN
+%         if plane(i).DT >= plane(k).AT
+%             OV_initial(i,k) = 1;
+%         end
+%     end
+% end
+% OVc = OV_initial';
 
-%% Creating matrix for equality the constraints
-%NBays=4; (Moved to top)
-%In cplex, the constraint matrix has to be separted in equality constraint
+%% Creating matrix for the equality constraints
+%In cplex, the constraint matrix has to be separated in equality constraint
 %matrix and inequality constraint matrix
 
 %Computation of equality constraint matrix: 
-%1-plane constraint: there can not be more than one bay with the some value
+%1-plane constraint: there can not be more than one bay for the same plane
 Aeq=[];
     for j=1:NBays
-         Aeq=[Aeq,eye(PN)];
+         Aeq=[Aeq,eye(AN)];
     end
-    
-    T=[];
+%2-towing constraint: if a plane is towed, then is has to have a leaving
+%bay, meaning X_i+NP,k
+T=[];
 Aux=[];
 for i=1:NBays
-      Aux=[Aux,eye(PN)];
+      Aux=[Aux,eye(AN)];
     end
 for i=1:NBays
     T=[T;Aux];
 end
-% Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(PN*NBays),T,-T];
-Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(PN, PN*NBays),Aux,-Aux];
+%final matrix
+Aeq = [Aeq, zeros(size(Aeq)),zeros(size(Aeq));zeros(AN, AN*NBays),Aux,-Aux];
 
 
 %%  Creating matrix for inequality the constraints
 
-OVab = zeros(PN, 3*PN*NBays);
-OVdb = zeros(PN, 3*PN*NBays);
+OVab = zeros(AN, 3*AN*NBays);
+OVdb = zeros(AN, 3*AN*NBays);
 
-% filling the overlapping matrix for arriving planes
-for i=1:PN
-    for j=1:PN
+% filling the overlapping matrix for arriving planes, comparing the
+% arrival and departure times with towing (ATT, DTT) and without, but with buffer
+% (AT,DT)
+for i=1:AN
+    for j=1:AN
         if (plane(i).AT>plane(j).AT && plane(i).AT<plane(j).DT)
             OVab (i,j) = 1;
             if (plane(i).AT > plane(j).ATT)
-                OVab(i,j+2*PN*NBays) = -1;
+                OVab(i,j+2*AN*NBays) = -1;
                 if (plane(i).AT > plane(j).DTT)
-                    OVab (i,j+PN*NBays) = 1;
+                    OVab (i,j+AN*NBays) = 1;
                 end
             end
         end
@@ -214,23 +208,22 @@ for i=1:PN
     end
 end
 
+% Filling the overlapping matrix for departing planes, comparing the
+% arrival and departure times with towing (ATT, DTT) and without, but with buffer
+% (AT,DT)
 
-
-
-% filling the overlapping matrix for departing planes
-
-for i=1:PN
-    for j=1:PN
+for i=1:AN
+    for j=1:AN
         if(plane(i).DTT > plane(j).AT && plane(i).DT < plane(j).DT)
             OVdb(i,j) = 1;
             if (plane(i).DTT > plane(j).ATT)
-            OVdb(i, j+2*(PN*NBays)) = -1;
+            OVdb(i, j+2*(AN*NBays)) = -1;
             end
         elseif (plane(j).DT>plane(i).DTT && plane(j).DT>plane(i).DTT)
-            OVdb(i, j+PN*NBays) = 1;
+            OVdb(i, j+AN*NBays) = 1;
         end
         if (i==j)
-            OVdb (i,j+PN*NBays) = 1;
+            OVdb (i,j+AN*NBays) = 1;
         end
     end
 end
@@ -239,23 +232,25 @@ OVd = OVdb;
 OVa = OVab;
 
 %creating the Aineq matrix - shifting the base (OVab and OVdb) matrices of
-%PN position <-> apllying the same constraint for every bay
+%AN position <-> apllying the same constraint for every bay
 for i =1:NBays-1
-%     PN*(3*NBays-i)
-    OVd = [OVd; OVdb(:,PN*(3*NBays-i)+1:end), OVdb(:,1:PN*(3*NBays-i))];
-    OVa = [OVa; OVab(:,PN*(3*NBays-i)+1:end), OVab(:,1:PN*(3*NBays-i))];
+%     AN*(3*NBays-i)
+    OVd = [OVd; OVdb(:,AN*(3*NBays-i)+1:end), OVdb(:,1:AN*(3*NBays-i))];
+    OVa = [OVa; OVab(:,AN*(3*NBays-i)+1:end), OVab(:,1:AN*(3*NBays-i))];
 end
 
-
-
+%The mentioned before, plus two new last constraints
+%1- similar to the equality, a plane that tows can only tow from the bay to
+%which arrived and has to have any but one leaving bay
+%2- One plane can only have a leaving bay maximum
 OV = [OVa;OVd;...
-    eye(PN*NBays), T, -eye(PN*NBays);...
-    zeros(PN,PN*NBays), Aux,zeros(PN,PN*NBays)]; %departing bays for each plane <=1
+    eye(AN*NBays), T, -eye(AN*NBays);...
+    zeros(AN,AN*NBays), Aux,zeros(AN,AN*NBays)]; %departing bays for each plane <=1
 Aineq=OV;
 
 %% MATRIX RELATING PLANE TYPE AND BAY COMPATIBILITY VECTOR
 PlaneComplianceMatrix = [];
-for i = 1:PN
+for i = 1:AN
      PlaneComplianceMatrix = [PlaneComplianceMatrix, BayComplianceData(:,plane(i).Type)];
 end
 PlaneComplianceVector =[];
@@ -279,12 +274,7 @@ end
 
 
 
-%%
-%Computation of inequality constraint matrix:
-%1-bay and plane constraint: whenever there is an extra plane, we rewrite a
-%constraint concerning the ground existing planes which have to be assigned to the
-%bays (move or stay in the same place)
-
+%% Build the other components to run the cplex (upper and lower bound of decision variables, rhs)
 
 %set the vector of the right side of the inequality constraints
 for i=1:size(Aineq, 1)
@@ -292,40 +282,32 @@ for i=1:size(Aineq, 1)
 end
 
 %set the vector of the right side of the equality constraints
-% for i=1:size(Aeq, 1)
-%         rightside_eq(i,1) = 1;
-% end
-rightside_eq = [ones(PN,1);zeros(PN,1)];
+rightside_eq = [ones(AN,1);zeros(AN,1)];
 %set the vector of the upper bound of the decision variables
 %set the vector of the lower bound of the decision variables
 %set the vector that states the decision variables are binary or integer
-for i=1:PN*NBays*3
+for i=1:AN*NBays*3
         ub(i,1) =1;
         lb(i,1) =0;
         ctype(1,i)='B';
 end
-%incorporate distance matrix that tells us the distance from a fixed
-%terminal, pre-assigned before to every plane.
 
-% d=readmatrix('distance.xlsx'); (moved to top)
-% d(:,1) = [];
-
+%define the coefficients of the decision variables for the objective
+%function for distance between bays and gates
 f=[];
 c=1;
-% set the vector of the coefficients of the objective function for distance
-% between bays and gates
 for i=1:NBays
-    for j=1:PN
+    for j=1:AN
        f(c)=2* d(i,(plane(j).terminal))*plane(j).Passenger;
-       f(c+PN*NBays) = f(c)/2;
-       f(c+2*PN*NBays) = - f(c)/2 + 100;
+       f(c+AN*NBays) = f(c)/2;
+       f(c+2*AN*NBays) = - f(c)/2 + 100;
        c=c+1;
     end
 end
 
 %% Adding Bay Compliance constraints
-% Number of Decision variables = Bays*PN
-% Aineq = [Aineq;diag(diag(ones(NBays*PN)))];
+% Number of Decision variables = Bays*AN
+% Aineq = [Aineq;diag(diag(ones(NBays*AN)))];
 % rightside_ineq = [rightside_ineq; RHS_comp];
 
 %cplex implementation 
@@ -337,17 +319,15 @@ end
      end
  end
  
- %%
-arriving=[];
+ %% Display the result in matrix
+arriving= [];
 towings = [];
 leaving = [];
 x=x';
 for i = 1:NBays
-arriving = [arriving; x(1+PN*(i-1):PN*i)];
-towings = [towings; x(1+PN*(i-1)+PN*NBays*2:PN*i+PN*NBays*2)];
-leaving = [leaving; x(1+PN*(i-1)+PN*NBays:PN*i+PN*NBays)];
-
-
+arriving = [arriving; x(1+AN*(i-1):AN*i)];
+towings = [towings; x(1+AN*(i-1)+AN*NBays*2:AN*i+AN*NBays*2)];
+leaving = [leaving; x(1+AN*(i-1)+AN*NBays:AN*i+AN*NBays)];
 end
 
 
@@ -356,7 +336,7 @@ end
  disp(arriving);
  fprintf('V_i,k matrix \n\n');
  disp(towings);
- fprintf('X_i+PN,k matrix \n');
+ fprintf('X_i+AN,k matrix \n');
  disp(leaving);
 
  
@@ -368,13 +348,12 @@ end
 x_output= [];
 
 for i = 1:NBays
- x_output = [x_output; x([(i-1)*PN+1: (i-1)*PN+5])'];
-%  [(i-1)*PN+1: (i-1)*PN+5]
+ x_output = [x_output; x([(i-1)*AN+1: (i-1)*AN+5])'];
 end
 % x_output = x_output';
 % x_output
 a1=[];
-for i = 1 : PN
+for i = 1 : AN
     plane(i).at = [(plane(i).AT-mod(plane(i).AT, 100))/100, mod(plane(i).AT, 100), 0];
     plane(i).att = [(plane(i).ATT-mod(plane(i).ATT, 100))/100, mod(plane(i).ATT, 100), 0];
     plane(i).dt = [(plane(i).DT-mod(plane(i).DT, 100))/100, mod(plane(i).DT, 100), 0];
@@ -386,11 +365,11 @@ end
 for k = 1:NBays
 
 % b is a vector with the number of the bay, for each plane i have to give a 
-%     plot command with specify the color of the line
+% plot command with specify the color of the line
 
 b = [k,k];
 
-for i = 1 : PN
+for i = 1 : AN
     
     
         if (towings(k,i) == 0 && arriving(k,i)==1)
@@ -420,18 +399,7 @@ for i = 1 : PN
             datetick('x','HH:MM:SS')  
             
         end
-        
-        
-%         c=cellfun(@(x) num2str(x,'%02d'),num2cell(a),'UniformOutput',false);
-%         d=strcat(c(:,1),':',c(:,2),':',c(:,3));
-%         plot(datenum(d,'HH:MM:SS'),b,'Linewidth', 6,'Color',plane(i).Color);            
-%         hold on;
-%         datetick('x','HH:MM:SS')  
-
-        
-     
-    
-    
+          
 end
  
 end
