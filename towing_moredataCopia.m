@@ -219,8 +219,9 @@ for i=1:AN
             if (plane(i).DTT > plane(j).ATT)
             OVdb(i, j+2*(AN*NBays)) = -1;
             end
-        elseif (plane(j).DT>plane(i).DTT && plane(j).DT>plane(i).DTT)
+            if (plane(j).DT>plane(i).DTT)
             OVdb(i, j+AN*NBays) = 1;
+            end
         end
         if (i==j)
             OVdb (i,j+AN*NBays) = 1;
