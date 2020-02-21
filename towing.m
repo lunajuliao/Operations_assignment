@@ -119,39 +119,66 @@ end
 
 %% INCORPORATE THE TOWING TIME FOR EACH PLANE 
 TT=30; %in minutes
+h = floor(TT/60);
+min = mod(TT,60);
+
 for i=1:PN
-    plane(i).ATT=plane(i).AT+TT;
-    plane(i).DTT=plane(i).DT-TT;
-    if(mod(plane(i).ATT,100) >=60)%correction of the time, to be presented as hours:minutes
-        minutes=mod(plane(i).ATT,100)-60;
-        plane(i).ATT=floor(plane(i).ATT/100)*100+100+minutes;
-    else
+    hap = floor(plane(i).AT / 100);
+    minap = mod(plane(i).AT , 100);
+    hdp = floor(plane(i).DT / 100);
+    mindp = mod(plane(i).DT , 100);
+    plane(i).ATT = 100*(h+hap+floor((minap+min)/60)) + mod (min+minap ,60);
+    plane(i).DTT = 100*(hdp-h-double(mindp<min)) + double(mindp>min)*(mindp-min) + double(mindp<min)*(60-min+mindp)  ;
+%     plane(i).ATT=plane(i).AT+TT;
+%     plane(i).DTT=plane(i).DT-TT;
+%     if(mod(plane(i).ATT,100) >=60)%correction of the time, to be presented as hours:minutes
+%         minutes=mod(plane(i).ATT,100)-60;
+%         plane(i).ATT=floor(plane(i).ATT/100)*100+100+minutes;
+%     else
+%     end
+%     
+%     if(mod(plane(i).DTT,100) >=60)%correction of the time, to be presented as hours:minutes
+%         minutes=100-mod(plane(i).DTT,100);
+%         plane(i).DTT=floor(plane(i).DTT/100)*100+60-minutes;
+%     else
+%     end
+
+    
+end
+%% INCORPORATE THE BUFFER TIME FOR EACH PLANE 
+BT=0; %in minutes
+h = floor(BT/60);
+min = mod(BT,60);
+
+for i=1:PN
+    
+    hap = floor(plane(i).AT / 100);
+    minap = mod(plane(i).AT , 100);
+    hdp = floor(plane(i).DT / 100);
+    mindp = mod(plane(i).DT , 100);
+    plane(i).AT = 100*(hap-h-double(minap<min)) + double(minap>min)*(minap-min) + double(minap<min)*(60-min+minap)  ;
+    plane(i).DT = 100*(h+hdp+floor((mindp+min)/60)) + mod (min+mindp ,60);
+%     if(mod(plane(i).AT,100) >=60)%correction of the time, to be presented as hours:minutes
+%         minutes=100-mod(plane(i).AT,100);
+%         plane(i).AT=floor(plane(i).AT/100)*100+60-minutes;
+%     else
+%     end
+%     
+%     if(mod(plane(i).DT,100) >=60)%correction of the time, to be presented as hours:minutes
+%         minutes=mod(plane(i).DT,100)-60;
+%         plane(i).DT=floor(plane(i).DT/100)*100+100+minutes;
+%     else
+%     end
+
+    if 2359 < plane(i).DT
+        plane(i).DT = 2359;
+    end
+    if plane(i).AT < 0
+        plane(i).AT = 0;
     end
     
-    if(mod(plane(i).DTT,100) >=60)%correction of the time, to be presented as hours:minutes
-        minutes=100-mod(plane(i).DTT,100);
-        plane(i).DTT=floor(plane(i).DTT/100)*100+60-minutes;
-    else
-    end
 end
 
-%% INCORPORATE THE BUFFER TIME FOR EACH PLANE 
-BT=10; %in minutes
-for i=1:PN
-    plane(i).AT=plane(i).AT-BT;
-    plane(i).DT=plane(i).DT+BT;
-    if(mod(plane(i).AT,100) >=60)%correction of the time, to be presented as hours:minutes
-        minutes=100-mod(plane(i).AT,100);
-        plane(i).AT=floor(plane(i).AT/100)*100+60-minutes;
-    else
-    end
-    
-    if(mod(plane(i).DT,100) >=60)%correction of the time, to be presented as hours:minutes
-        minutes=mod(plane(i).DT,100)-60;
-        plane(i).DT=floor(plane(i).DT/100)*100+100+minutes;
-    else
-    end
-end
 
 
 %% OVERLAPPING MATRIX OV (overlap)
